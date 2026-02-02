@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: basic-nest-app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src
+      - ./storage:/app/storage
+      - ./logs:/app/logs
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      API_KEY: dev-api-key-12345
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: admin
+      DB_PASSWORD: password
+      DB_DATABASE: datastore
+      DB_SYNCHRONIZE: "true"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      FILE_STORAGE_PATH: /app/storage
+      LOG_FILE_PATH: /app/logs
+      LOG_LEVEL: debug
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: basic-nest-postgres
+    environment:
+      POSTGRES_DB: datastore
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: basic-nest-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+
+  adminer:
+    image: adminer
+    container_name: basic-nest-adminer
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    depends_on:
+      - postgres
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  app-network:
+    driver: bridge
+
